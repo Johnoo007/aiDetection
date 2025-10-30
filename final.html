@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ground Floor - Main Area</title>
+    <style>
+        :root {
+            /* Colors */
+            --primary-bg-color: #f5f5f5;
+            --header-bg-color: #333;
+            --header-text-color: white;
+            --content-bg-color: white;
+            --border-color: #333;
+            --table-bg-color: #808080;
+            --table-border-color: #666;
+            --shadow-color: rgba(0,0,0,0.1);
+            
+            /* Status Colors */
+            --status-empty-bg: #4CAF50;
+            --status-empty-border: #006400;
+            --status-occupied-bg: #f44336;
+            --status-occupied-border: #8B0000;
+            --status-unattended-bg: #FFEB3B;
+            --status-unattended-border: #8B8000;
+            
+            /* Sizing & Spacing */
+            --border-radius-main: 8px;
+            --border-radius-small: 4px;
+            --border-radius-chair: 6px;
+
+            /* Chair Horizontal Positions */
+            --chair-pos-1: 11.36%;
+            --chair-pos-2: 29.54%;
+            --chair-pos-3: 56.81%;
+            --chair-pos-4: 75%;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--primary-bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--header-bg-color);
+            color: var(--header-text-color);
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius-main);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: clamp(24px, 5vw, 32px);
+        }
+        
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .legend {
+            background-color: var(--content-bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-main);
+            box-shadow: 0 2px 4px var(--shadow-color);
+            padding: 15px;
+            width: clamp(225px, 50vw, 280px);
+            margin-bottom: 30px;
+        }
+        
+        .legend h2 {
+            margin: 0 0 15px 0;
+            font-size: clamp(18px, 4vw, 20px);
+            text-align: center;
+        }
+        
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-small);
+            flex-shrink: 0;
+        }
+        
+        .legend-box.empty, .chair.empty {
+            background-color: var(--status-empty-bg);
+            border-color: var(--status-empty-border);
+        }
+        
+        .legend-box.occupied, .chair.occupied {
+            background-color: var(--status-occupied-bg);
+            border-color: var(--status-occupied-border);
+        }
+        
+        .legend-box.unattended, .chair.unattended {
+            background-color: var(--status-unattended-bg);
+            border-color: var(--status-unattended-border);
+        }
+        
+        .legend-text {
+            font-size: clamp(14px, 3vw, 16px);
+        }
+        
+        .floor-plan-viewport {
+            width: 95%;
+            max-width: 1200px;
+            aspect-ratio: 980 / 1480;
+            position: relative;
+        }
+
+        .floor-container {
+            position: absolute;
+            inset: 0;
+        }
+        
+        .column {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 44.9%;
+        }
+
+        .column-1 { left: 0; }
+        .column-2 { right: 0; }
+        
+        .table-group {
+            position: absolute;
+            width: 100%;
+            height: 12.16%;
+        }
+        
+        .row-1 { top: 0; }
+        .row-2 { top: 17.56%; }
+        .row-3 { top: 35.13%; }
+        .row-4 { top: 52.70%; }
+        .row-5 { top: 70.27%; }
+        .row-6 { top: 87.83%; }
+        
+        .table-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(1rem, 3.5vw, 1.5rem);
+            font-weight: bold;
+            color: var(--header-text-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .tables-connected {
+            position: absolute;
+            display: flex;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90.9%;
+            height: 44.4%;
+        }
+        
+        .table {
+            width: 50%;
+            height: 100%;
+            background-color: var(--table-bg-color);
+            border: 3px solid var(--table-border-color);
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+        
+        .table:first-child {
+            border-radius: var(--border-radius-main) 0 0 var(--border-radius-main);
+            border-right-width: 1px;
+        }
+        
+        .table:last-child {
+            border-radius: 0 var(--border-radius-main) var(--border-radius-main) 0;
+            border-left-width: 1px;
+        }
+        
+        .chair {
+            position: absolute;
+            width: 9.09%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--status-empty-bg);
+            border: 2px solid var(--status-empty-border);
+            border-radius: var(--border-radius-chair);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            /* Add a transition for smooth color changes */
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+        
+        .chair-top { top: 0; }
+        .chair-bottom { bottom: 0; }
+        
+        .pos-1 { left: var(--chair-pos-1); }
+        .pos-2 { left: var(--chair-pos-2); }
+        .pos-3 { left: var(--chair-pos-3); }
+        .pos-4 { left: var(--chair-pos-4); }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ground Floor, Main Area</h1>
+    </header>
+    
+    <main>
+        <div class="legend">
+            <h2>Seat Occupancy Status</h2>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-box empty"></div>
+                    <span class="legend-text">Empty</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box occupied"></div>
+                    <span class="legend-text">Occupied</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box unattended"></div>
+                    <span class="legend-text">Unattended Belongings</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="floor-plan-viewport">
+            <div class="floor-container">
+                <!-- Column 1 -->
+                <div class="column column-1">
+                    <!-- Row A1 -->
+                    <div class="table-group row-1">
+                        <div class="table-label">A1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="A1-1"></div>
+                            <div class="table" id="A1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="A1-C1"></div>
+                        <div class="chair chair-top pos-2" id="A1-C2"></div>
+                        <div class="chair chair-top pos-3" id="A1-C3"></div>
+                        <div class="chair chair-top pos-4" id="A1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="A1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="A1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="A1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="A1-C8"></div>
+                    </div>
+                    
+                    <!-- Row B1 -->
+                    <div class="table-group row-2">
+                        <div class="table-label">B1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="B1-1"></div>
+                            <div class="table" id="B1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="B1-C1"></div>
+                        <div class="chair chair-top pos-2" id="B1-C2"></div>
+                        <div class="chair chair-top pos-3" id="B1-C3"></div>
+                        <div class="chair chair-top pos-4" id="B1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="B1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="B1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="B1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="B1-C8"></div>
+                    </div>
+                    
+                    <!-- Row C1 -->
+                    <div class="table-group row-3">
+                        <div class="table-label">C1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="C1-1"></div>
+                            <div class="table" id="C1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="C1-C1"></div>
+                        <div class="chair chair-top pos-2" id="C1-C2"></div>
+                        <div class="chair chair-top pos-3" id="C1-C3"></div>
+                        <div class="chair chair-top pos-4" id="C1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="C1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="C1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="C1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="C1-C8"></div>
+                    </div>
+                    
+                    <!-- Row D1 -->
+                    <div class="table-group row-4">
+                        <div class="table-label">D1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="D1-1"></div>
+                            <div class="table" id="D1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="D1-C1"></div>
+                        <div class="chair chair-top pos-2" id="D1-C2"></div>
+                        <div class="chair chair-top pos-3" id="D1-C3"></div>
+                        <div class="chair chair-top pos-4" id="D1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="D1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="D1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="D1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="D1-C8"></div>
+                    </div>
+                    
+                    <!-- Row E1 -->
+                    <div class="table-group row-5">
+                        <div class="table-label">E1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="E1-1"></div>
+                            <div class="table" id="E1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="E1-C1"></div>
+                        <div class="chair chair-top pos-2" id="E1-C2"></div>
+                        <div class="chair chair-top pos-3" id="E1-C3"></div>
+                        <div class="chair chair-top pos-4" id="E1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="E1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="E1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="E1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="E1-C8"></div>
+                    </div>
+                    
+                    <!-- Row F1 -->
+                    <div class="table-group row-6">
+                        <div class="table-label">F1</div>
+                        <div class="tables-connected">
+                            <div class="table" id="F1-1"></div>
+                            <div class="table" id="F1-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="F1-C1"></div>
+                        <div class="chair chair-top pos-2" id="F1-C2"></div>
+                        <div class="chair chair-top pos-3" id="F1-C3"></div>
+                        <div class="chair chair-top pos-4" id="F1-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="F1-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="F1-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="F1-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="F1-C8"></div>
+                    </div>
+                </div>
+                
+                <!-- Column 2 -->
+                <div class="column column-2">
+                    <!-- Row A2 -->
+                    <div class="table-group row-1">
+                        <div class="table-label">A2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="A2-1"></div>
+                            <div class="table" id="A2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="A2-C1"></div>
+                        <div class="chair chair-top pos-2" id="A2-C2"></div>
+                        <div class="chair chair-top pos-3" id="A2-C3"></div>
+                        <div class="chair chair-top pos-4" id="A2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="A2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="A2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="A2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="A2-C8"></div>
+                    </div>
+                    
+                    <!-- Row B2 -->
+                    <div class="table-group row-2">
+                        <div class="table-label">B2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="B2-1"></div>
+                            <div class="table" id="B2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="B2-C1"></div>
+                        <div class="chair chair-top pos-2" id="B2-C2"></div>
+                        <div class="chair chair-top pos-3" id="B2-C3"></div>
+                        <div class="chair chair-top pos-4" id="B2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="B2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="B2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="B2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="B2-C8"></div>
+                    </div>
+                    
+                    <!-- Row C2 -->
+                    <div class="table-group row-3">
+                        <div class="table-label">C2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="C2-1"></div>
+                            <div class="table" id="C2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="C2-C1"></div>
+                        <div class="chair chair-top pos-2" id="C2-C2"></div>
+                        <div class="chair chair-top pos-3" id="C2-C3"></div>
+                        <div class="chair chair-top pos-4" id="C2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="C2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="C2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="C2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="C2-C8"></div>
+                    </div>
+                    
+                    <!-- Row D2 -->
+                    <div class="table-group row-4">
+                        <div class="table-label">D2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="D2-1"></div>
+                            <div class="table" id="D2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="D2-C1"></div>
+                        <div class="chair chair-top pos-2" id="D2-C2"></div>
+                        <div class="chair chair-top pos-3" id="D2-C3"></div>
+                        <div class="chair chair-top pos-4" id="D2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="D2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="D2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="D2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="D2-C8"></div>
+                    </div>
+                    
+                    <!-- Row E2 -->
+                    <div class="table-group row-5">
+                        <div class="table-label">E2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="E2-1"></div>
+                            <div class="table" id="E2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="E2-C1"></div>
+                        <div class="chair chair-top pos-2" id="E2-C2"></div>
+                        <div class="chair chair-top pos-3" id="E2-C3"></div>
+                        <div class="chair chair-top pos-4" id="E2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="E2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="E2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="E2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="E2-C8"></div>
+                    </div>
+                    
+                    <!-- Row F2 -->
+                    <div class="table-group row-6">
+                        <div class="table-label">F2</div>
+                        <div class="tables-connected">
+                            <div class="table" id="F2-1"></div>
+                            <div class="table" id="F2-2"></div>
+                        </div>
+                        <div class="chair chair-top pos-1" id="F2-C1"></div>
+                        <div class="chair chair-top pos-2" id="F2-C2"></div>
+                        <div class="chair chair-top pos-3" id="F2-C3"></div>
+                        <div class="chair chair-top pos-4" id="F2-C4"></div>
+                        <div class="chair chair-bottom pos-1" id="F2-C5"></div>
+                        <div class="chair chair-bottom pos-2" id="F2-C6"></div>
+                        <div class="chair chair-bottom pos-3" id="F2-C7"></div>
+                        <div class="chair chair-bottom pos-4" id="F2-C8"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Defines a mapping from status codes in the CSV to CSS class names.
+        const STATUS_CLASSES = {
+            0: 'empty',
+            1: 'occupied',
+            2: 'unattended'
+        };
+
+        /**
+         * Fetches seat status data from a CSV file and updates the DOM.
+         */
+        async function updateSeatStatus() {
+            console.log("Fetching latest seat status...");
+            try {
+                // Fetch the CSV file, telling the browser not to use a cached version.
+                const response = await fetch('seat_status.csv', { cache: 'no-cache' });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load CSV. Server responded with status: ${response.status}`);
+                }
+                
+                const csvData = await response.text();
+                const rows = csvData.trim().split('\n').slice(1); // Get all rows except the header
+
+                rows.forEach(row => {
+                    if (!row.trim()) return; // Skip empty lines in the CSV
+
+                    const [chairId, status] = row.split(',');
+
+                    // Check for malformed rows in the CSV
+                    if (!chairId || status === undefined) {
+                        console.warn(`Skipping malformed CSV row: "${row}"`);
+                        return;
+                    }
+
+                    const chairElement = document.getElementById(chairId.trim());
+                    const statusClass = STATUS_CLASSES[parseInt(status.trim(), 10)];
+
+                    if (chairElement) {
+                        if (statusClass) {
+                            // Remove any existing status classes before adding the new one.
+                            chairElement.classList.remove('empty', 'occupied', 'unattended');
+                            chairElement.classList.add(statusClass);
+                        } else {
+                            console.warn(`Invalid status "${status.trim()}" for ChairID "${chairId.trim()}" found in CSV.`);
+                        }
+                    } else {
+                        // This warning helps find typos in the CSV file's ChairID column.
+                        console.warn(`ChairID "${chairId.trim()}" from CSV was not found in the HTML.`);
+                    }
+                });
+
+                console.log("Seat status update complete.");
+
+            } catch (error) {
+                console.error("Failed to update seat status:", error);
+            }
+        }
+
+        // When the page is fully loaded, run the update function immediately,
+        // and then set it to run again every 5 seconds (5000 milliseconds).
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSeatStatus();
+            setInterval(updateSeatStatus, 5000);
+        });
+    </script>
+</body>
+</html>```
